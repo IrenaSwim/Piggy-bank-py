@@ -104,7 +104,10 @@ class Notebook:
 
     def suggested_achivement_date(self, goal: Goal):
         self.aver_deposit = sum(d['сумма'] for d in goal.deposit_history) // len(goal.deposit_history) #средняя сумма пополнений
-        self.aver_freq = (goal.deposit_history[len(goal.deposit_history) - 1]['дата'] - self.goals[goal]['дата создания']) // len(goal.deposit_history)#средняя частота пополнений (delta object)
+        if goal.deposit_history[len(goal.deposit_history) - 1]['дата'] == self.goals[goal]['дата создания']:
+            self.aver_freq = timedelta(days=1)
+        else:
+            self.aver_freq = (goal.deposit_history[len(goal.deposit_history) - 1]['дата'] - self.goals[goal]['дата создания']) // len(goal.deposit_history)#средняя частота пополнений (delta object)
         return f'Предполагаемая дата достижения цели: {goal.deposit_history[len(goal.deposit_history) - 1]['дата'] + (goal.left_to_collect // self.aver_deposit * self.aver_freq)}'
 
 
@@ -146,12 +149,8 @@ while True:
         break
     
 print(objs[0].deposit(1500))
-notebook1.get_goals()
-print(objs[1].deposit(500))
-print(objs[0].deposit_history)
-print(notebook1.goal_deadline(objs[0]))
-print(notebook1.left_to_deadline(objs[0]))
-print(notebook1.left_to_deadline(objs[1]))
+print(notebook1.suggested_achivement_date(objs[0]))
+
 
 
     
