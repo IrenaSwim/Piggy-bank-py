@@ -100,7 +100,7 @@ class Notebook:
             if self.user_input == 'да':
                 self.goal_deadline(goal)
             else:
-                return 'Возможно, позже.'    
+                return 'Возможно позже.'    
 
     def suggested_achivement_date(self, goal: Goal):
         self.aver_deposit = sum(d['сумма'] for d in goal.deposit_history) // len(goal.deposit_history) #средняя сумма пополнений
