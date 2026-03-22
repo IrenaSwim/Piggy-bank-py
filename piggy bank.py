@@ -9,6 +9,7 @@ class Goal:
         self.category = category 
         self._current_balance = current_balance 
         self.status = status
+        self.left_to_collect = 0
         self.progress = 0
         self.deposit_history = []
         Goal.all_progress.setdefault(self.goal_name, self.progress)
@@ -28,11 +29,13 @@ class Goal:
         if self._current_balance >= self.sum:
             self.progress = 100
             self.deposit_history.append({'сумма':amount, 'дата':date.today()})
+            self.left_to_collect = 0
             Goal.all_progress[self.goal_name] = self.progress
             print(f'Поздравляем! Цель "{self.goal_name}" достигнута. Ваш баланс: {self._current_balance}')
         else:
             self.progress = self._current_balance * 100 // self.sum
             self.deposit_history.append({'сумма':amount, 'дата':date.today()})
+            self.left_to_collect = self.sum - self._current_balance
             Goal.all_progress[self.goal_name] = self.progress
             if self.progress >= 50:
                 return f'Половина суммы в копилке! Ваш баланс {self._current_balance}'
@@ -46,6 +49,7 @@ class Goal:
         
         self._current_balance -= amount 
         self.progress = self._current_balance * 100 // self.sum
+        self.left_to_collect = self.sum - self._current_balance
         Goal.all_progress[self.goal_name] = self.progress
         return f'Минус {amount} руб в копилке.\nВаш баланс: {self._current_balance} руб. Копим дальше!' 
         
@@ -65,6 +69,8 @@ class Notebook:
         self.goals = {}
         self.user_input = ''
         self.deadline = None
+        self.aver_deposit = 0
+        self.aver_freq = None
         
     def goal_deadline(self, goal: Goal):
         self.user_input = input('Введите желаемую дату достижения цели в формате гггг/мм/дд без пробелов ')
@@ -95,12 +101,25 @@ class Notebook:
                 self.goal_deadline(goal)
             else:
                 return 'Возможно, позже.'    
-            
+
+    def suggested_achivement_date(self, goal: Goal):
+        self.aver_deposit = sum(d['сумма'] for d in goal.deposit_history) // len(goal.deposit_history) #средняя сумма пополнений
+        self.aver_freq = (goal.deposit_history[len(goal.deposit_history) - 1]['дата'] - self.goals[goal]['дата создания']) // len(goal.deposit_history)#средняя частота пополнений (delta object)
+        return f'Предполагаемая дата достижения цели: {goal.deposit_history[len(goal.deposit_history) - 1]['дата'] + (goal.left_to_collect // self.aver_deposit * self.aver_freq)}'
+
+
     def get_goals(self):
         for value in self.goals.values():
             for key, value in value.items():
                 print(key, ':', value)
-            print()    
+            print()
+
+ # пояснения для формулы def suggested_achivement_date: делим сумму, которую осталось
+ # накопить на среднюю сумму поподнения и получаем сколько таких средних сумм нам 
+ # еще нужно внести. Умножаем это число на средний отрезок времени между пополнениями
+ #(для вычисления среднего отрезка находим разность между датой создания цели и датой последнего
+ # пополнения и делим на количество пополнений). Полученный отрезок времени прибавляем к 
+ # дате последнего пополнения.               
 
 notebook1 = Notebook() 
 
