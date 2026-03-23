@@ -31,7 +31,7 @@ class Goal:
             self.deposit_history.append({'сумма':amount, 'дата':date.today()})
             self.left_to_collect = 0
             Goal.all_progress[self.goal_name] = self.progress
-            print(f'Поздравляем! Цель "{self.goal_name}" достигнута. Ваш баланс: {self._current_balance}')
+            return f'Поздравляем! Цель "{self.goal_name}" достигнута. Ваш баланс: {self._current_balance}'
         else:
             self.progress = self._current_balance * 100 // self.sum
             self.deposit_history.append({'сумма':amount, 'дата':date.today()})
@@ -53,7 +53,7 @@ class Goal:
         return f'Минус {amount} руб в копилке для цели "{self.goal_name}".\nВаш баланс: {self._current_balance} руб. Копим дальше!' 
         
     def get_progress(self):
-        return f'Цель выполнена на {self.progress} %' 
+        return f'Цель "{self.goal_name}" выполнена на {self.progress} %' 
         
     def info(self):
         return {'цель':self.goal_name, 'категория':self.category, 'сумма':self.sum, 'статус':self.status, 'накоплено': self.progress}   
@@ -61,8 +61,8 @@ class Goal:
     @classmethod
     def all_goals_progress(cls):
         for key, value in cls.all_progress.items():
-            print(f'Цель {key} выполнена на {value} %')
-            
+            print(f'Цель "{key}" выполнена на {value} %')
+          
 class Notebook:
     def __init__(self):
         self.goals = {}
@@ -73,16 +73,24 @@ class Notebook:
         
     def goal_deadline(self, goal: Goal):
         self.user_input = input('Введите желаемую дату достижения цели в формате гггг/мм/дд без пробелов ')
-        self.goals[goal].setdefault('копим до', datetime.strptime(self.user_input, '%Y/%m/%d'))
-        return 'Дата успешно добавлена'
-        
+        isValidDate = True
+        try:
+            datetime.strptime(self.user_input, '%Y/%m/%d')
+        except ValueError:
+            isValidDate = False    
+        if (isValidDate):
+            self.goals[goal].setdefault('копим до', datetime.strptime(self.user_input, '%Y/%m/%d'))
+            print('Дата успешно добавлена')
+        else:
+            print('Введенная дата не соответствует формату')
+
     def add_goal(self, goal: Goal, creation_date = date.today()):
         self.goals.setdefault(goal, goal.info())
         self.goals[goal].setdefault('дата создания', creation_date)
-        print(f'Цель добавлена в блокнот {creation_date}')
+        return f'Цель добавлена в блокнот {creation_date}'
         
     def del_goal(self, goal: Goal):
-        self.user_input = input('Вы действительно хотите удалить эту цель? Введите "да" или "нет" ')
+        self.user_input = input(f'Вы действительно хотите удалить цель "{self.goals[goal]['цель']}"? Введите "да" или "нет" ')
         if self.user_input == 'нет':
             return 'Ok,цель остается в блокноте'
         else:
@@ -92,7 +100,7 @@ class Notebook:
     def left_to_deadline(self, goal: Goal):
         if 'копим до' in self.goals[goal]:
             self.deadline = self.goals[goal]['копим до'] - datetime.now()
-            return f'Осталось {self.deadline.days} дней до установленной даты достижения цели'
+            return f'Осталось {self.deadline.days} дней до установленной даты достижения цели "{self.goals[goal]['цель']}"'
         else:
             print('Дата достижения цели не установлена. Хотите установить? Введите "да" или "нет" ')
             self.user_input = input()
@@ -107,7 +115,7 @@ class Notebook:
             self.aver_freq = timedelta(days=1)
         else:
             self.aver_freq = (goal.deposit_history[len(goal.deposit_history) - 1]['дата'] - self.goals[goal]['дата создания']) // len(goal.deposit_history)#средняя частота пополнений (delta object)
-        return f'Предполагаемая дата достижения цели: {goal.deposit_history[len(goal.deposit_history) - 1]['дата'] + (goal.left_to_collect // self.aver_deposit * self.aver_freq)}'
+        return f'Предполагаемая дата достижения цели "{self.goals[goal]['цель']}": {goal.deposit_history[len(goal.deposit_history) - 1]['дата'] + (goal.left_to_collect // self.aver_deposit * self.aver_freq)}'
 
 
     def get_goals(self):
@@ -115,9 +123,8 @@ class Notebook:
             for key, value in value.items():
                 print(key, ':', value)
             print()
-
  # пояснения для формулы def suggested_achivement_date: делим сумму, которую осталось
- # накопить на среднюю сумму поподнения и получаем сколько таких средних сумм нам 
+ # накопить на среднюю сумму пополнения и получаем сколько таких средних сумм нам 
  # еще нужно внести. Умножаем это число на средний отрезок времени между пополнениями
  #(для вычисления среднего отрезка находим разность между датой создания цели и датой последнего
  # пополнения и делим на количество пополнений). Полученный отрезок времени прибавляем к 
@@ -133,26 +140,55 @@ def create_goals(notebook, obj_list):
     while True:
         name = input('Введите название цели ')
         print()
-        sum_goal = int(input('Введите сумму для накопления '))
+        while True:
+            sum_goal = input('Введите сумму для накопления ')
+            if sum_goal.isdigit() == False:
+                print('Cумма должна содержать только числовые значения. Попробуйте снова')
+            else:
+                break
         print()
         print('Выберите и введите название категории для своей цели ')
         print()
         for ind, item in enumerate(categories, start=1):
-            print(ind, item) 
+            print(ind, item)
+        print()     
             
         category = input()  
-        object = Goal(name, sum_goal, category)
+        object = Goal(name, int(sum_goal), category)
         obj_list.append(object)
         notebook.add_goal(object)
-        answer = input('Вы хотите добавить еще одну цель? Введите "да" или "нет" ')    
+        print()
+        while True:
+            answer = input('Вы хотите добавить еще одну цель? Введите "да" или "нет" ')
+            if answer != 'нет' and answer != 'да':
+                print('Вы ввели неверное слово. Введите "да" или "нет"')
+            else:
+                break       
+    
         if answer == 'нет':
             break
 
 create_goals(notebook1, objs)
-
-print(objs)           
+print()   
+notebook1.get_goals()
+print()        
 print(objs[0].deposit(1500))
+print()
+print(Goal.all_goals_progress())
+print()
 print(notebook1.suggested_achivement_date(objs[0]))
+print()
+notebook1.goal_deadline(objs[0])
+print()
+print(notebook1.left_to_deadline(objs[0]))
+print()
+print(objs[0].withdrawal(500))
+print()
+print(notebook1.del_goal(objs[1]))
+print()
+notebook1.get_goals()
+print()
+print(objs[0].get_progress())
 
 
 
