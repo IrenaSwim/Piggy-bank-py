@@ -40,9 +40,8 @@ class Goal:
             if self.progress >= 50:
                 return f'Половина суммы в копилке! Ваш баланс {self._current_balance}'
             else:
-                return f'Ура! Вы стали ближе к своей цели на {amount} руб!\nВаш текущий баланс: {self._current_balance} руб'
-              
-        
+                return f'Ура! Вы стали ближе к своей цели "{self.goal_name}" на {amount} руб!\nВаш текущий баланс: {self._current_balance} руб'
+                
     def withdrawal(self, amount):
         if amount > self._current_balance:
             raise ValueError('Не хватает средств для снятия суммы')    
@@ -51,7 +50,7 @@ class Goal:
         self.progress = self._current_balance * 100 // self.sum
         self.left_to_collect = self.sum - self._current_balance
         Goal.all_progress[self.goal_name] = self.progress
-        return f'Минус {amount} руб в копилке.\nВаш баланс: {self._current_balance} руб. Копим дальше!' 
+        return f'Минус {amount} руб в копилке для цели "{self.goal_name}".\nВаш баланс: {self._current_balance} руб. Копим дальше!' 
         
     def get_progress(self):
         return f'Цель выполнена на {self.progress} %' 
@@ -128,26 +127,30 @@ notebook1 = Notebook()
 
 objs = []
 
-categories = ['отдых', 'работа', 'здоровье', 'учеба', 'стиль', 'транспорт', 'дом', 'разное']
+def create_goals(notebook, obj_list):
+    categories = ['отдых', 'работа', 'здоровье', 'учеба', 'стиль', 'транспорт', 'дом', 'разное']
 
-while True:
-    name = input('Введите название цели ')
-    print()
-    sum_goal = int(input('Введите сумму для накопления '))
-    print()
-    print('Выберите и введите название категории для своей цели ')
-    print()
-    for ind, item in enumerate(categories, start=1):
-        print(ind, item) 
-        
-    category = input()  
-    object = Goal(name, sum_goal, category)
-    objs.append(object)
-    notebook1.add_goal(object)
-    answer = input('Вы хотите добавить еще одну цель? Введите "да" или "нет" ')    
-    if answer == 'нет':
-        break
-    
+    while True:
+        name = input('Введите название цели ')
+        print()
+        sum_goal = int(input('Введите сумму для накопления '))
+        print()
+        print('Выберите и введите название категории для своей цели ')
+        print()
+        for ind, item in enumerate(categories, start=1):
+            print(ind, item) 
+            
+        category = input()  
+        object = Goal(name, sum_goal, category)
+        obj_list.append(object)
+        notebook.add_goal(object)
+        answer = input('Вы хотите добавить еще одну цель? Введите "да" или "нет" ')    
+        if answer == 'нет':
+            break
+
+create_goals(notebook1, objs)
+
+print(objs)           
 print(objs[0].deposit(1500))
 print(notebook1.suggested_achivement_date(objs[0]))
 
