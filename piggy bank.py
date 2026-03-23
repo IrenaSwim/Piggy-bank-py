@@ -167,7 +167,7 @@ def create_goals(notebook, obj_list):
     
         if answer == 'нет':
             break
-
+#примеры вызова методов для 2х целей
 create_goals(notebook1, objs)
 print()   
 notebook1.get_goals()
